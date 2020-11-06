@@ -23,15 +23,23 @@ jobs:
           done <teams
 
       - name: Select random member
-        run: cat members | sort | uniq | sort -R | head -n 1 > random_reviewer
+        run: |
+          pr_author=$(jq -r .pull_sender.login "$GITHUB_EVENT_PATH")
+          cat members | grep -v "$pr_author" | sort | uniq | sort -R | head -n 1 > random_reviewer
 
       - name: test
         run: cat "$GITHUB_EVENT_PATH"
 
       - name: Request review
         run: |
-          pull_number=$(jq -r .pull_request.number "$GITHUB_EVENT_PATH")
-          cat << EOF > data.json
-          {"reviewers": ["`cat random_reviewer`"]}
-          EOF
-          curl -d "@data.json" -H "Authorization:Bearer ${{ secrets.MY_GITHUB_TOKEN }}" -X POST "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$pull_number/requested_reviewers"
+          random_reviewer=`cat random_reviewer`
+          if [ "$random_reviewer" = "" ]; then
+            echo "there's noone to request review from"
+          else
+            echo "requesting review from $random_reviewer"
+            pull_number=$(jq -r .pull_request.number "$GITHUB_EVENT_PATH")
+            cat << EOF > data.json
+            {"reviewers": ["$random_reviewer"]}
+            EOF
+            curl -d "@data.json" -H "Authorization:Bearer ${{ secrets.MY_GITHUB_TOKEN }}" -X POST "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$pull_number/requested_reviewers"
+          fi
