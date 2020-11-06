@@ -26,29 +26,37 @@ jobs:
           while read team || [ -n "$team" ]; do
             echo "Fetching members for team $team"
             response=`curl "https://api.github.com/orgs/$team/members" -H "Authorization:Bearer ${{ secrets.MY_GITHUB_TOKEN }}"`
-            echo $response | jq -r '.[].login' >> members
+            echo $response | jq -r '.[].login' > $team
           done <teams
 
       - name: Select random member
         run: |
-          available_members=$(cat members | grep -v "^$GITHUB_ACTOR\s*$" | sort | uniq)
+          all_available_members=""
 
+          # ignoring members from the global ignore list
+          while read team || [ -n "$team" ]; do
+            available=$(cat $team)
+            if [ -f "global-ignore/$team/ignore_members" ]; then
+              while read ignore || [ -n "$ignore" ]; do
+                available=$(printf $available | grep -v "^$ignore\s*$" | sort)
+              done <"global-ignore/$team/ignore_members"
+            fi
+            all_available_members="$all_available_members$available"
+          done <teams
+
+          # ignoring members from the local ignore list
           if [ -f .pr_review_ignore ]; then
             while read ignore || [ -n "$ignore" ]; do
-              available_members=$(printf $available_members | grep -v "^$ignore\s*$" | sort)
+              all_available_members=$(printf $all_available_members | grep -v "^$ignore\s*$" | sort)
             done <.pr_review_ignore
           fi
 
-          repo_name=$(echo $GITHUB_REPOSITORY | sed -e 's/.*\/\(.*\)/\1/')
-          if [ -f "global-ignore/$repo_name/ignore_members" ]; then
-            while read ignore || [ -n "$ignore" ]; do
-              available_members=$(printf $available_members | grep -v "^$ignore\s*$" | sort)
-            done <"global-ignore/$repo_name/ignore_members"
-          fi
+          # exclude PR author
+          all_available_members=$(printf $all_available_members | grep -v "^$GITHUB_ACTOR\s*$" | sort | uniq)
 
-          printf "\nPicking from:\n$available_members\n\n"
+          printf "\nPicking from:\n$all_available_members\n\n"
 
-          echo $available_members | sort -R | head -n 1 > random_reviewer
+          printf $all_available_members | sort -R | head -n 1 > random_reviewer
           echo "Picked: `cat random_reviewer`"
 
       - name: Request review
