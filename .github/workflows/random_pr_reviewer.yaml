@@ -6,9 +6,17 @@ jobs:
     runs-on: ubuntu-16.04
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repo
+        uses: actions/checkout@v2
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout repo with global ignores
+        uses: actions/checkout@v2
+        with:
+          repository: actions-test/global-ignore
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
+          path: global-ignore
 
       - name: Extract global code owners
         run: grep "^*\s*" CODEOWNERS | grep -o "@[^ ]*"  | sed -e 's/@\(.*\)\/\(.*\)/\1\/teams\/\2/g' > teams
@@ -23,15 +31,19 @@ jobs:
 
       - name: Select random member
         run: |
-          pr_author=$(jq -r .sender.login "$GITHUB_EVENT_PATH")
-          echo "PR author: $pr_author"
-
-          available_members=$(cat members | grep -v "^$pr_author\s*$" | sort | uniq)
+          available_members=$(cat members | grep -v "^$GITHUB_ACTOR\s*$" | sort | uniq)
 
           if [ -f .pr_review_ignore ]; then
             while read ignore || [ -n "$ignore" ]; do
               available_members=$(printf $available_members | grep -v "^$ignore\s*$" | sort)
             done <.pr_review_ignore
+          fi
+
+          repo_name=$(echo $GITHUB_REPOSITORY | sed -e 's/.*\/\(.*\)/\1/')
+          if [ -f "global-ignore/$repo_name/ignore_members" ]; then
+            while read ignore || [ -n "$ignore" ]; do
+              available_members=$(printf $available_members | grep -v "^$ignore\s*$" | sort)
+            done <"global-ignore/$repo_name/ignore_members"
           fi
 
           printf "\nPicking from:\n$available_members\n\n"
