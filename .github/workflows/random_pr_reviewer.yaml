@@ -31,7 +31,7 @@ jobs:
 
           if [ -f ".pr_review_ignore" ]; then
             while read ignore; do
-              available_members=$(echo $evailable_members | grep -v "^$pr_author\s*$")
+              available_members=$(echo $evailable_members | grep -v "^$ignore\s*$")
             done <.pr_review_ignore
           fi
 
