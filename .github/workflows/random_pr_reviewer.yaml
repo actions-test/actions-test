@@ -25,8 +25,6 @@ jobs:
       - name: Select random member
         run: |
           pr_author=$(jq -r .sender.login "$GITHUB_EVENT_PATH")
-          echo $pr_author
-          cat members | grep -v "$pr_author"
           cat members | grep -v "$pr_author" | sort | uniq | sort -R | head -n 1 > random_reviewer
 
       - name: test
