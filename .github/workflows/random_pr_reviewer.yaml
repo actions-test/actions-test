@@ -22,8 +22,6 @@ jobs:
             echo $response | jq -r '.[].login' >> members
           done <teams
 
-      - run: ls -la
-
       - name: Select random member
         run: |
           pr_author=$(jq -r .sender.login "$GITHUB_EVENT_PATH")
@@ -34,7 +32,7 @@ jobs:
           if [ -f ".pr_review_ignore" ]; then
             while read ignore; do
               available_members=$(echo $evailable_members | grep -v "^$pr_author\s*$")
-            done <`cat ".pr_review_ignore"`
+            done <.pr_review_ignore
           fi
 
           printf "\nPicking from:\n$available_members\n\n"
