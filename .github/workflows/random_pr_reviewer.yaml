@@ -25,8 +25,8 @@ jobs:
         run: |
           while read team || [ -n "$team" ]; do
             echo "Fetching members for team $team"
-            path=$(echo team | sed -e 's/@\(.*\)\/\(.*\)/\1\/teams\/\2/g')
-            team_name=$(echo team | sed -e 's/.*\/\(.*\)/\1/')
+            path=$(echo $team | sed -e 's/@\(.*\)\/\(.*\)/\1\/teams\/\2/g')
+            team_name=$(echo $team | sed -e 's/.*\/\(.*\)/\1/')
             response=`curl "https://api.github.com/orgs/$path/members" -H "Authorization:Bearer ${{ secrets.MY_GITHUB_TOKEN }}"`
             echo $response | jq -r '.[].login' > $team_name
           done <teams
