@@ -16,7 +16,7 @@ jobs:
       - name: Fetch team members
         run: |
           while read team; do
-            $response=`curl "https://api.github.com/orgs/$team/members" -H "Authorization:Bearer ${{ secrets.GITHUB_TOKEN }}"`
+            response=`curl "https://api.github.com/orgs/$team/members" -H "Authorization:Bearer ${{ secrets.GITHUB_TOKEN }}"`
             echo $response
             cat $response | jq -r '.[].login' >> members
           done <teams
