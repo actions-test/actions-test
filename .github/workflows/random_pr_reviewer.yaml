@@ -37,7 +37,7 @@ jobs:
 
           # ignoring members from the global ignore list
           while read team || [ -n "$team" ]; do
-            team_name=$(echo team | sed -e 's/.*\/\(.*\)/\1/')
+            team_name=$(echo $team | sed -e 's/.*\/\(.*\)/\1/')
             available=$(cat $team_name)
             if [ -f "global-ignore/$team_name/ignore_members" ]; then
               while read ignore || [ -n "$ignore" ]; do
