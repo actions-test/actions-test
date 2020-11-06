@@ -1,7 +1,7 @@
 name: Random PR Reviewer
 on:
   pull_request:
-    types: [opened edited]
+    types: [opened, edited]
 jobs:
   random-reviewer:
     runs-on: ubuntu-16.04
