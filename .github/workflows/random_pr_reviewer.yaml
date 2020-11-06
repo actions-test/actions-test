@@ -19,14 +19,16 @@ jobs:
           path: global-ignore
 
       - name: Extract global code owners
-        run: grep "^*\s*" CODEOWNERS | grep -o "@[^ ]*"  | sed -e 's/@\(.*\)\/\(.*\)/\1\/teams\/\2/g' > teams
+        run: grep "^*\s*" CODEOWNERS | grep -o "@[^ ]*" > teams
 
       - name: Fetch team members
         run: |
           while read team || [ -n "$team" ]; do
             echo "Fetching members for team $team"
-            response=`curl "https://api.github.com/orgs/$team/members" -H "Authorization:Bearer ${{ secrets.MY_GITHUB_TOKEN }}"`
-            echo $response | jq -r '.[].login' > $team
+            path=$(echo team | sed -e 's/@\(.*\)\/\(.*\)/\1\/teams\/\2/g')
+            team_name=$(echo team | sed -e 's/.*\/\(.*\)/\1/')
+            response=`curl "https://api.github.com/orgs/$path/members" -H "Authorization:Bearer ${{ secrets.MY_GITHUB_TOKEN }}"`
+            echo $response | jq -r '.[].login' > $team_name
           done <teams
 
       - name: Select random member
@@ -35,11 +37,12 @@ jobs:
 
           # ignoring members from the global ignore list
           while read team || [ -n "$team" ]; do
-            available=$(cat $team)
-            if [ -f "global-ignore/$team/ignore_members" ]; then
+            team_name=$(echo team | sed -e 's/.*\/\(.*\)/\1/')
+            available=$(cat $team_name)
+            if [ -f "global-ignore/$team_name/ignore_members" ]; then
               while read ignore || [ -n "$ignore" ]; do
                 available=$(printf $available | grep -v "^$ignore\s*$" | sort)
-              done <"global-ignore/$team/ignore_members"
+              done <"global-ignore/$team_name/ignore_members"
             fi
             all_available_members="$all_available_members$available"
           done <teams
