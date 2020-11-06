@@ -25,10 +25,13 @@ jobs:
       - name: Select random member
         run: |
           pr_author=$(jq -r .sender.login "$GITHUB_EVENT_PATH")
-          cat members | grep -v "^$pr_author\s*$" | sort | uniq | sort -R | head -n 1 > random_reviewer
+          echo "PR author: $pr_author"
 
-      - name: test
-        run: cat "$GITHUB_EVENT_PATH"
+          all_but_author=$(cat members | grep -v "^$pr_author\s*$" | sort | uniq)
+          echo "Picking from:\n$all_but_author\n"
+
+          random_reviwer=$(echo $all_but_author | sort -R | head -n 1 > random_reviewer)
+          echo "Picked: $random_reviewer"
 
       - name: Request review
         run: |
