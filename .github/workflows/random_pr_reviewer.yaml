@@ -32,14 +32,14 @@ jobs:
 
       - name: Request review
         run: |
-          random_reviewer=`cat random_reviewer`
+          random_reviewer=$(cat random_reviewer)
           if [ "$random_reviewer" = "" ]; then
-            echo "there's noone to request review from"
+            echo "there's no one to request a review from"
           else
             echo "requesting review from $random_reviewer"
             pull_number=$(jq -r .pull_request.number "$GITHUB_EVENT_PATH")
-            cat << EOF > data.json
+            cat << `EOF > data.json
             {"reviewers": ["$random_reviewer"]}
-            EOF
+            `EOF
             curl -d "@data.json" -H "Authorization:Bearer ${{ secrets.MY_GITHUB_TOKEN }}" -X POST "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$pull_number/requested_reviewers"
           fi
