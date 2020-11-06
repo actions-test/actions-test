@@ -1,7 +1,6 @@
 name: Random PR Reviewer
-on:
-  pull_request:
-    types: [opened, edited]
+on: pull_request
+
 jobs:
   random-reviewer:
     runs-on: ubuntu-16.04
@@ -17,5 +16,7 @@ jobs:
       - name: Fetch team members
         run: |
           while read team; do
-            curl "https://api.github.com/orgs/$team/members" -H "Authorization:Bearer ${{ secrets.GITHUB_TOKEN }}" | jq -r '.[].login' >> members
+            $response=`curl "https://api.github.com/orgs/$team/members" -H "Authorization:Bearer ${{ secrets.GITHUB_TOKEN }}"`
+            echo $response
+            cat $response | jq -r '.[].login' >> members
           done <teams
