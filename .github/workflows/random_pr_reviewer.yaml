@@ -30,7 +30,7 @@ jobs:
           all_but_author=$(cat members | grep -v "^$pr_author\s*$" | sort | uniq)
           echo "Picking from:\n$all_but_author\n"
 
-          random_reviwer=$(echo $all_but_author | sort -R | head -n 1 > random_reviewer)
+          random_reviewer=$(echo $all_but_author | sort -R | head -n 1 > random_reviewer)
           echo "Picked: $random_reviewer"
 
       - name: Request review
