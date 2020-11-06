@@ -11,5 +11,11 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Test
-        run: ls -la
+      - name: Extract global code owners
+        run: grep "^*\s*" CODEOWNERS | grep -o "@[^ ]*"  | sed -e 's/@\(.*\)\/\(.*\)/\1\/team\/\2/g' > teams
+
+      - name: Fetch team members
+        run: |
+          while read team; do
+            curl "https://api.github.com/orgs/$team/members" -H "Authorization:Bearer ${{ secrets.GITHUB_TOKEN }}" | jq -r '.[].login' >> members
+          done <teams
