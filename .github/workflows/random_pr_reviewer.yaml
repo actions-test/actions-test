@@ -29,7 +29,7 @@ jobs:
 
           available_members=$(cat members | grep -v "^$pr_author\s*$" | sort | uniq)
 
-          if [ -f .pr_review_ignore ]; then
+          if [ -f ".pr_review_ignore" ]; then
             while read ignore; do
               available_members=$(echo $evailable_members | grep -v "^$pr_author\s*$")
             done <`cat .pr_review_ignore`
