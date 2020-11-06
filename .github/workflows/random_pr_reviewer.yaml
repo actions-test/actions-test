@@ -11,7 +11,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Extract global code owners
-        run: grep "^*\s*" CODEOWNERS | grep -o "@[^ ]*"  | sed -e 's/@\(.*\)\/\(.*\)/\1\/team\/\2/g' > teams
+        run: grep "^*\s*" CODEOWNERS | grep -o "@[^ ]*"  | sed -e 's/@\(.*\)\/\(.*\)/\1\/teams\/\2/g' > teams
 
       - name: Fetch team members
         run: |
