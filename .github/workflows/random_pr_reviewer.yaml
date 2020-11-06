@@ -35,13 +35,15 @@ jobs:
         run: |
           all_available_members=""
 
-          # ignoring members from the global ignore list
+          # ignoring members from the global team ignore list
           while read team || [ -n "$team" ]; do
+            echo "processing team: $team"
             team_name=$(echo $team | sed -e 's/.*\/\(.*\)/\1/')
             available=$(cat $team_name)
             if [ -f "global-ignore/$team_name/ignore_members" ]; then
               while read ignore || [ -n "$ignore" ]; do
-                available=$(printf $available | grep -v "^$ignore\s*$" | sort)
+                echo "ignoring: $ignore"
+                available=$(printf "$available" | grep -v "^$ignore\s*$" | sort)
               done <"global-ignore/$team_name/ignore_members"
             fi
             all_available_members="$all_available_members$available"
@@ -50,16 +52,16 @@ jobs:
           # ignoring members from the local ignore list
           if [ -f .pr_review_ignore ]; then
             while read ignore || [ -n "$ignore" ]; do
-              all_available_members=$(printf $all_available_members | grep -v "^$ignore\s*$" | sort)
+              all_available_members=$(printf "$all_available_members" | grep -v "^$ignore\s*$" | sort)
             done <.pr_review_ignore
           fi
 
           # exclude PR author
-          all_available_members=$(printf $all_available_members | grep -v "^$GITHUB_ACTOR\s*$" | sort | uniq)
+          all_available_members=$(printf "$all_available_members" | grep -v "^$GITHUB_ACTOR\s*$" | sort | uniq)
 
           printf "\nPicking from:\n$all_available_members\n\n"
 
-          printf $all_available_members | sort -R | head -n 1 > random_reviewer
+          printf "$all_available_members" | sort -R | head -n 1 > random_reviewer
           echo "Picked: `cat random_reviewer`"
 
       - name: Request review
