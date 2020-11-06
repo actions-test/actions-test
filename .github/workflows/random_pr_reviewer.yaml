@@ -15,10 +15,9 @@ jobs:
 
       - name: Fetch team members
         run: |
-          while read team; do
+          while read team || [ -n "$team" ]; do
             echo "Fetching members for team $team"
             response=`curl "https://api.github.com/orgs/$team/members" -H "Authorization:Bearer ${{ secrets.MY_GITHUB_TOKEN }}"`
-            echo $response
             echo $response | jq -r '.[].login' >> members
           done <teams
 
@@ -29,10 +28,9 @@ jobs:
 
           available_members=$(cat members | grep -v "^$pr_author\s*$" | sort | uniq)
 
-          if [ -f ".pr_review_ignore" ]; then
-            while read ignore; do
-              echo "ignorring: $ignore"
-              available_members=$(echo $available_members | grep -v "^$ignore\s*$")
+          if [ -f .pr_review_ignore ]; then
+            while read ignore || [ -n "$ignore" ]; do
+              available_members=$(printf $available_members | grep -v "^$ignore\s*$")
             done <.pr_review_ignore
           fi
 
