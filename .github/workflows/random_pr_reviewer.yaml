@@ -5,6 +5,9 @@ jobs:
   random-reviewer:
     runs-on: ubuntu-16.04
 
+    env:
+      GLOBAL_IGNORE_REPO: actions-test/global-ignore
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -14,7 +17,7 @@ jobs:
       - name: Checkout repo with global ignores
         uses: actions/checkout@v2
         with:
-          repository: actions-test/global-ignore
+          repository: $GLOBAL_IGNORE_REPO
           token: ${{ secrets.MY_GITHUB_TOKEN }}
           path: global-ignore
 
