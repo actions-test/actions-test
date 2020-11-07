@@ -17,7 +17,7 @@ jobs:
       - name: Checkout repo with global ignores
         uses: actions/checkout@v2
         with:
-          repository: $GLOBAL_IGNORE_REPO
+          repository: ${{ env.GLOBAL_IGNORE_REPO }}
           token: ${{ secrets.MY_GITHUB_TOKEN }}
           path: global-ignore
 
