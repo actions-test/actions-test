@@ -57,7 +57,7 @@ jobs:
           fi
 
           # exclude PR author and empty strings
-          all_available_members=$(printf "$all_available_members" | grep -v "^$GITHUB_ACTOR\s*$" | grep -v "$\s*$" | sort | uniq)
+          all_available_members=$(printf "$all_available_members" | grep -v "^$GITHUB_ACTOR\s*$" | grep -v "^\s*$" | sort | uniq)
 
           printf "\nPicking from:\n$all_available_members\n\n"
 
