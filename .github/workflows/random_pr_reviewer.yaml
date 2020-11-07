@@ -46,7 +46,7 @@ jobs:
                 available=$(printf "$available" | grep -v "^$ignore\s*$" | sort)
               done <"global-ignore/$team_name/ignore_members"
             fi
-            all_available_members="$all_available_members$available"
+            all_available_members="$all_available_members\n$available"
           done <teams
 
           # ignoring members from the local ignore list
