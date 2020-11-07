@@ -1,0 +1,82 @@
+name: Random PR Reviewer
+on: pull_request
+
+jobs:
+  random-reviewer:
+    runs-on: ubuntu-16.04
+
+    env:
+      GLOBAL_IGNORE_REPO: actions-test/global-ignore
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout repo with global ignores
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ env.GLOBAL_IGNORE_REPO }}
+          token: ${{ secrets.MY_GITHUB_TOKEN }}
+          path: global-ignore
+
+      - name: Extract global code owners
+        run: grep "^*\s*" CODEOWNERS | grep -o "@[^ ]*" > teams
+
+      - name: Fetch team members
+        run: |
+          while read team || [ -n "$team" ]; do
+            echo "Fetching members for team $team"
+            path=$(echo $team | sed -e 's/@\(.*\)\/\(.*\)/\1\/teams\/\2/g')
+            team_name=$(echo $team | sed -e 's/.*\/\(.*\)/\1/')
+            response=`curl "https://api.github.com/orgs/$path/members" -H "Authorization:Bearer ${{ secrets.MY_GITHUB_TOKEN }}"`
+            echo $response | jq -r '.[].login' > $team_name
+          done <teams
+
+      - name: Select random member
+        run: |
+          all_available_members=""
+
+          # ignoring members from the global team ignore list
+          while read team || [ -n "$team" ]; do
+            echo "processing team: $team"
+            team_name=$(echo $team | sed -e 's/.*\/\(.*\)/\1/')
+            available=$(cat $team_name)
+            if [ -f "global-ignore/$team_name/ignore_members" ]; then
+              while read ignore || [ -n "$ignore" ]; do
+                echo "ignoring: $ignore"
+                available=$(printf "$available" | grep -v "^$ignore\s*$" | sort)
+              done <"global-ignore/$team_name/ignore_members"
+            fi
+            all_available_members="$all_available_members\n$available"
+          done <teams
+
+          # ignoring members from the local ignore list
+          if [ -f .pr_review_ignore ]; then
+            while read ignore || [ -n "$ignore" ]; do
+              all_available_members=$(printf "$all_available_members" | grep -v "^$ignore\s*$" | sort)
+            done <.pr_review_ignore
+          fi
+
+          # exclude PR author and empty strings
+          all_available_members=$(printf "$all_available_members" | grep -v "^$GITHUB_ACTOR\s*$" | grep -v "^\s*$" | sort | uniq)
+
+          printf "\nPicking from:\n$all_available_members\n\n"
+
+          printf "$all_available_members" | sort -R | head -n 1 > random_reviewer
+          echo "Picked: `cat random_reviewer`"
+
+      - name: Request review
+        run: |
+          random_reviewer=$(cat random_reviewer)
+          if [ "$random_reviewer" = "" ]; then
+            echo "there's no one to request a review from"
+          else
+            echo "requesting review from $random_reviewer"
+            pull_number=$(jq -r .pull_request.number "$GITHUB_EVENT_PATH")
+            cat <<EOF > data.json
+            {"reviewers": ["$random_reviewer"]}
+          EOF
+            curl -d "@data.json" -H "Authorization:Bearer ${{ secrets.MY_GITHUB_TOKEN }}" -X POST "https://api.github.com/repos/$GITHUB_REPOSITORY/pulls/$pull_number/requested_reviewers"
+          fi
